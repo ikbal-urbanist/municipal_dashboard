@@ -1,0 +1,84 @@
+name: Deploy dashboards to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: |
+            mockup-free-dashboard/package-lock.json
+            mock-up-pro/package-lock.json
+
+      - name: Install free dashboard dependencies
+        run: npm ci
+        working-directory: mockup-free-dashboard
+
+      - name: Lint free dashboard
+        run: npm run lint
+        working-directory: mockup-free-dashboard
+
+      - name: Build free dashboard
+        run: npm run build
+        working-directory: mockup-free-dashboard
+
+      - name: Install pro mockup dependencies
+        run: npm ci
+        working-directory: mock-up-pro
+
+      - name: Lint pro mockup
+        run: npm run lint
+        working-directory: mock-up-pro
+
+      - name: Build pro mockup
+        run: npm run build
+        working-directory: mock-up-pro
+
+      - name: Assemble Pages artifact
+        run: |
+          mkdir -p site/free site/pro
+          cp index.html site/index.html
+          cp -R mockup-free-dashboard/dist/. site/free/
+          cp -R mock-up-pro/dist/. site/pro/
+          touch site/.nojekyll
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
