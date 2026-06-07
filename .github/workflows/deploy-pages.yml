@@ -32,7 +32,7 @@ jobs:
             mock-up-pro/package-lock.json
 
       - name: Install free dashboard dependencies
-        run: npm ci
+        run: npm install
         working-directory: mockup-free-dashboard
 
       - name: Lint free dashboard
@@ -44,7 +44,7 @@ jobs:
         working-directory: mockup-free-dashboard
 
       - name: Install pro mockup dependencies
-        run: npm ci
+        run: npm install
         working-directory: mock-up-pro
 
       - name: Lint pro mockup
